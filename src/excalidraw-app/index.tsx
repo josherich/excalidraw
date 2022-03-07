@@ -509,6 +509,13 @@ const ExcalidrawWrapper = () => {
     languageDetector.cacheUserLanguage(langCode);
   }, [langCode]);
 
+  const onSelect = (
+    selectedElements: readonly ExcalidrawElement[],
+    selectedGroupIds: readonly string[],
+  ) => {
+    console.log(selectedElements, selectedGroupIds);
+  };
+
   const onChange = (
     elements: readonly ExcalidrawElement[],
     appState: AppState,
@@ -693,6 +700,7 @@ const ExcalidrawWrapper = () => {
       <Excalidraw
         ref={excalidrawRefCallback}
         onChange={onChange}
+        onSelect={onSelect}
         initialData={initialStatePromiseRef.current.promise}
         onCollabButtonClick={collabAPI?.onCollabButtonClick}
         isCollaborating={collabAPI?.isCollaborating()}

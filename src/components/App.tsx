@@ -195,6 +195,7 @@ import {
   LibraryItems,
   PointerDownState,
   SceneData,
+  CustomActionFn,
 } from "../types";
 import {
   debounce,
@@ -251,6 +252,7 @@ import {
   isPointHittingLinkIcon,
   isLocalLink,
 } from "../element/Hyperlink";
+import { register } from '../actions/register';
 
 const IsMobileContext = React.createContext(false);
 export const useIsMobile = () => useContext(IsMobileContext);
@@ -365,6 +367,7 @@ class App extends React.Component<AppProps, AppState> {
         importLibrary: this.importLibraryFromUrl,
         setToastMessage: this.setToastMessage,
         id: this.id,
+        addContextMenuOption: this.addContextMenuOption,
       } as const;
       if (typeof excalidrawRef === "function") {
         excalidrawRef(api);
@@ -418,7 +421,7 @@ class App extends React.Component<AppProps, AppState> {
           onContextMenu={this.handleCanvasContextMenu}
           onPointerMove={this.handleCanvasPointerMove}
           onPointerUp={this.handleCanvasPointerUp}
-          onPointerCancel={this.removePointer}
+          onPointerCancel={this.handleCanvasPointerUp}
           onTouchMove={this.handleTouchMove}
           onPointerDown={this.handleCanvasPointerDown}
         >
@@ -441,7 +444,7 @@ class App extends React.Component<AppProps, AppState> {
         onDoubleClick={this.handleCanvasDoubleClick}
         onPointerMove={this.handleCanvasPointerMove}
         onPointerUp={this.handleCanvasPointerUp}
-        onPointerCancel={this.removePointer}
+        onPointerCancel={this.handleCanvasPointerUp}
         onTouchMove={this.handleTouchMove}
       >
         {t("labels.drawingCanvas")}
@@ -1633,6 +1636,28 @@ class App extends React.Component<AppProps, AppState> {
       this.addNewImagesToImageCache();
     },
   );
+
+  public addContextMenuOption = (
+    name: string,
+    type: string,
+    callback: CustomActionFn,
+  ) => {
+    const action = register({
+      name,
+      perform(elements, appState) {
+        callback(elements, appState);
+        return {
+          appState,
+          commitToHistory: false,
+        };
+      },
+      contextItemLabel: `labels.${name}`,
+      tags: ["custom", type],
+      keyTest: (event) =>
+        !event[KEYS.CTRL_OR_CMD] && event.altKey && event.code === KEYS.A,
+    });
+    this.actionManager.registerAction(action);
+  };
 
   public updateScene = withBatchedUpdates(
     <K extends keyof AppState>(sceneData: {
@@ -2922,6 +2947,12 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     this.removePointer(event);
+    const elements = this.scene.getElements();
+    const selectedElements = getSelectedElements(elements, this.state);
+    this.props.onSelect?.(
+      selectedElements,
+      Object.keys(this.state.selectedGroupIds),
+    );
   };
 
   private maybeOpenContextMenuAfterPointerDownOnTouchDevices = (
@@ -5243,8 +5274,10 @@ class App extends React.Component<AppProps, AppState> {
       options.push(actionCopyAsSvg);
     }
     if (type === "canvas") {
+      const customOptions = this.actionManager.getCustomOptions("canvas");
       const viewModeOptions = [
         ...options,
+        ...customOptions,
         typeof this.props.gridModeEnabled === "undefined" &&
           actionToggleGridMode,
         typeof this.props.zenModeEnabled === "undefined" && actionToggleZenMode,
@@ -5288,6 +5321,7 @@ class App extends React.Component<AppProps, AppState> {
               (probablySupportsClipboardWriteText && elements.length > 0)) &&
               separator,
             actionSelectAll,
+            ...customOptions,
             separator,
             typeof this.props.gridModeEnabled === "undefined" &&
               actionToggleGridMode,
@@ -5306,13 +5340,18 @@ class App extends React.Component<AppProps, AppState> {
         });
       }
     } else if (type === "element") {
+      const customOptions = this.actionManager.getCustomOptions("element");
       const elementsWithUnbindedText = getSelectedElements(
         elements,
         this.state,
       ).some((element) => !hasBoundTextElement(element));
       if (this.state.viewModeEnabled) {
         ContextMenu.push({
-          options: [navigator.clipboard && actionCopy, ...options],
+          options: [
+            navigator.clipboard && actionCopy,
+            ...options,
+            ...customOptions,
+          ],
           top,
           left,
           actionManager: this.actionManager,
@@ -5338,6 +5377,7 @@ class App extends React.Component<AppProps, AppState> {
               },
             this.isMobile && separator,
             ...options,
+            ...customOptions,
             separator,
             actionCopyStyles,
             actionPasteStyles,

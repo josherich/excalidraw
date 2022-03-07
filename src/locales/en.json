@@ -1,5 +1,6 @@
 {
   "labels": {
+    "addNode": "Add Node",
     "paste": "Paste",
     "pasteCharts": "Paste charts",
     "selectAll": "Select all",

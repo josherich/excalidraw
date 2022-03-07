@@ -106,7 +106,8 @@ export type ActionName =
   | "increaseFontSize"
   | "decreaseFontSize"
   | "unbindText"
-  | "hyperlink";
+  | "hyperlink"
+  | string;
 
 export type PanelComponentProps = {
   elements: readonly ExcalidrawElement[];
@@ -117,7 +118,7 @@ export type PanelComponentProps = {
 };
 
 export interface Action {
-  name: ActionName;
+  name: ActionName | string;
   PanelComponent?: React.FC<PanelComponentProps>;
   perform: ActionFn;
   keyPriority?: number;
@@ -137,6 +138,7 @@ export interface Action {
     appState: AppState,
   ) => boolean;
   checked?: (appState: Readonly<AppState>) => boolean;
+  tags?: readonly string[];
   trackEvent?:
     | boolean
     | ((action: Action, type: "ui" | "keyboard" | "api", value: any) => void);

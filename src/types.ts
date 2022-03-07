@@ -212,6 +212,10 @@ export interface ExcalidrawProps {
     appState: AppState,
     files: BinaryFiles,
   ) => void;
+  onSelect?: (
+    selectedElements: readonly ExcalidrawElement[],
+    selectedGroupIds: string[],
+  ) => void;
   initialData?: ImportedDataState | null | Promise<ImportedDataState | null>;
   excalidrawRef?: ForwardRef<ExcalidrawAPIRefValue>;
   onCollabButtonClick?: () => void;
@@ -406,4 +410,10 @@ export type ExcalidrawImperativeAPI = {
   readyPromise: ResolvablePromise<ExcalidrawImperativeAPI>;
   ready: true;
   id: string;
+  addContextMenuOption: InstanceType<typeof App>["addContextMenuOption"];
 };
+
+export type CustomActionFn = (
+  elements: readonly ExcalidrawElement[],
+  appState: Readonly<AppState>,
+) => void;

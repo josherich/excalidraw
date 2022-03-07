@@ -73,6 +73,18 @@ export class ActionManager implements ActionsManagerInterface {
     actions.forEach((action) => this.registerAction(action));
   }
 
+  getCustomOptions(type: string) {
+    return Object.keys(this.actions)
+      .map((key) => this.actions[key])
+      .filter((action) => {
+        return (
+          action.tags &&
+          action.tags.includes("custom") &&
+          action.tags.includes(type)
+        );
+    });
+  }
+
   handleKeyDown(event: React.KeyboardEvent | KeyboardEvent) {
     const canvasActions = this.app.props.UIOptions.canvasActions;
     const data = Object.values(this.actions)
